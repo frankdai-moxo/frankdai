@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Unified Scheduling — TIME_BOOKING + Calendly + Zoom Scheduler</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral",
+    themeVariables: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+      primaryColor: '#F6F5F3',
+      primaryTextColor: '#3E3C3A',
+      primaryBorderColor: '#EBEAE6',
+      lineColor: '#77736F'
+    }
+  });
+</script>
+<style>
+  :root {
+    --color-travertine-100: #FCFAFA;
+    --color-travertine-200: #F6F5F3;
+    --color-travertine-300: #F0EEEE;
+    --color-travertine-400: #EBEAE6;
+    --color-travertine-500: #E6E4E1;
+    --color-travertine-700: #D9D6D4;
+    --color-basalt-100: #8D8984;
+    --color-basalt-200: #77736F;
+    --color-basalt-300: #595653;
+    --color-basalt-400: #3E3C3A;
+    --color-basalt-700: #22201E;
+    --color-shell-100: #FFF5F6;
+    --color-shell-600: #F66985;
+    --color-shell-700: #E64767;
+    --color-jade-100: #F6FFFB;
+    --color-jade-500: #57B3A6;
+    --color-jade-700: #038C92;
+    --color-lichen-100: #FDFFE9;
+    --color-lichen-600: #E0BB25;
+    --color-lichen-700: #CEA40D;
+    --color-aquamarine-100: #F4FCFF;
+    --color-aquamarine-300: #B8E8FF;
+    --color-aquamarine-600: #44BEE8;
+    --color-aquamarine-700: #2D99C5;
+    --color-quartz-100: #FFF5FD;
+    --color-quartz-600: #DB6FAA;
+    --color-quartz-700: #C73F89;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: var(--color-basalt-400); }
+  .moxo-card { background:#fff; border:1px solid var(--color-travertine-400); border-radius:12px; }
+  .shadow-modern { box-shadow: 0 10px 40px -10px rgb(15 23 42 / .18), 0 2px 8px -2px rgb(15 23 42 / .08); }
+  .field { border:1px solid var(--color-travertine-500); border-radius:8px; background:#fff; }
+  .field-disabled { background: var(--color-travertine-200); color: var(--color-basalt-100); }
+  .label { font-size:14.4px; color: var(--color-basalt-400); margin-bottom:6px; display:block; }
+  .help { font-size:13px; color: var(--color-basalt-100); margin-top:6px; line-height:1.5; }
+  .req { color: var(--color-shell-700); }
+  .logo-tile { width:24px; height:24px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; color:#fff; flex:none; }
+  .chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:6px; background:var(--color-travertine-200); border:1px solid var(--color-travertine-400); font-size:13px; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:9999px; font-size:12px; font-weight:600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  th, td { text-align:left; padding:10px 12px; vertical-align:top; font-size:14px; }
+  thead th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--color-basalt-100); border-bottom:1px solid var(--color-travertine-400); }
+  tbody tr { border-bottom:1px solid var(--color-travertine-300); }
+  .tick { color: var(--color-jade-700); font-weight:700; }
+  .cross { color: var(--color-shell-700); font-weight:700; }
+  .partial { color: var(--color-lichen-700); font-weight:700; }
+  code { background: var(--color-travertine-200); padding:1px 5px; border-radius:4px; font-size:12px; }
+</style>
+</head>
+<body class="min-h-screen p-8" style="background: var(--color-travertine-100);">
+<div class="max-w-6xl mx-auto space-y-10">
+
+  <!-- TL;DR -->
+  <section class="moxo-card p-7">
+    <span class="pill" style="background:var(--color-aquamarine-100); color:var(--color-aquamarine-700);">Exploration · Module 8 — Integrations & Extensibility</span>
+    <h1 class="text-3xl font-bold mt-3" style="color:var(--color-basalt-700);">One scheduling step · unify the builder · two provider kinds</h1>
+    <p class="mt-2 max-w-3xl" style="color:var(--color-basalt-200);">
+      Fold <strong>Calendly</strong> and <strong>Zoom Scheduler</strong> into <strong>TIME_BOOKING</strong> as <em>providers</em>. The split that matters is <strong>what the provider is</strong>: <strong>generic calendars</strong> (Google, Outlook) are raw free/busy data — Moxo owns the booking UI; <strong>dedicated schedulers</strong> (Calendly, Zoom) are products whose hosted UI <em>is</em> their value — defer to it (single-use link + webhook). <strong>Unify the builder</strong>; let the assignee experience differ by kind, on purpose.
+    </p>
+    <dl class="mt-5 grid grid-cols-4 gap-4 text-sm">
+      <div><dt style="color:var(--color-basalt-100);">One discriminator</dt><dd class="font-medium">calendar vs scheduler</dd></div>
+      <div><dt style="color:var(--color-basalt-100);">Unified</dt><dd class="font-medium">builder + DDR outputs</dd></div>
+      <div><dt style="color:var(--color-basalt-100);">Diverges (by design)</dt><dd class="font-medium">assignee booking UI</dd></div>
+      <div><dt style="color:var(--color-basalt-100);">Reuses</dt><dd class="font-medium">ZOOM_SCHEDULER executor</dd></div>
+    </dl>
+  </section>
+
+  <!-- API investigation -->
+  <section class="moxo-card p-7">
+    <h2 class="text-2xl font-bold mb-1" style="color:var(--color-basalt-700);">API investigation — can each provider do what we do today?</h2>
+    <p class="help" style="font-size:14px;">"What we do today" in TIME_BOOKING = read host availability → render <em>Moxo's own</em> slot grid → book the meeting programmatically → expose start/end/join-URL/invitee as DDR. The question is which providers' APIs actually support that.</p>
+    <div class="overflow-hidden rounded-lg border mt-4" style="border-color:var(--color-travertine-400);">
+    <table class="w-full">
+      <thead>
+        <tr>
+          <th>Capability we rely on</th>
+          <th>Google / Outlook Calendar</th>
+          <th>Calendly</th>
+          <th>Zoom Scheduler</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Query real open slots</strong></td>
+          <td><span class="tick">✓</span> free/busy API; Moxo defines hours+duration</td>
+          <td><span class="tick">✓</span> <code>/event_type_available_times</code> (7-day window/req)</td>
+          <td><span class="cross">✗</span> only recurring <em>rule patterns</em> (9–5 Mon–Fri), not open slots</td>
+        </tr>
+        <tr>
+          <td><strong>Single-use link (hosted handoff)</strong></td>
+          <td>n/a — Moxo owns the UI</td>
+          <td><span class="tick">✓</span> <code>POST /scheduling_links</code> (max_event_count, owner=event type)</td>
+          <td><span class="tick">✓</span> <code>single_use_link</code> (schedule_id)</td>
+        </tr>
+        <tr>
+          <td><strong>Webhook + UTM correlation</strong></td>
+          <td>n/a (synchronous)</td>
+          <td><span class="tick">✓</span> invitee.created · <code>utm_campaign</code> round-trips</td>
+          <td><span class="tick">✓</span> scheduled_event_created · <code>utm_campaign</code> round-trips</td>
+        </tr>
+        <tr>
+          <td><strong>Can Moxo book via API instead?</strong></td>
+          <td>— (that's the model)</td>
+          <td><span class="partial">✓ possible</span>, but we <strong>decline</strong> — Calendly's hosted UI is the point</td>
+          <td><span class="cross">✗</span> no booking-create endpoint anyway</td>
+        </tr>
+        <tr>
+          <td><strong>Auth / plan</strong></td>
+          <td>per-host OAuth (existing)</td>
+          <td>OAuth app + <strong>paid Calendly plan</strong></td>
+          <td>OAuth (granular scheduler scopes)</td>
+        </tr>
+        <tr style="border-bottom:none;">
+          <td><strong>Kind</strong></td>
+          <td class="tick">calendar → Moxo books</td>
+          <td class="tick">scheduler → hosted handoff</td>
+          <td class="tick">scheduler → hosted handoff</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="mt-4 p-4 rounded-lg" style="background:var(--color-jade-100); border:1px solid var(--color-jade-500);">
+      <p style="font-size:14px;"><strong style="color:var(--color-jade-700);">The clean cut:</strong> Calendly <em>could</em> be API-booked in-portal, but it shouldn't be — its branding, reschedule/cancel, custom questions, reminders and timezone handling are the reason a customer chose it. Treating both schedulers as hosted handoff makes the model <strong>one discriminator</strong>, not two axes: a provider is either a <strong>generic calendar</strong> (Moxo renders + books) or a <strong>dedicated scheduler</strong> (mint single-use link → hosted page → webhook, correlated by <code>utm_campaign</code>). Both schedulers reuse today's ZOOM_SCHEDULER executor verbatim.</p>
+    </div>
+  </section>
+
+  <!-- Provider model -->
+  <section class="moxo-card p-7">
+    <h2 class="text-2xl font-bold mb-4" style="color:var(--color-basalt-700);">The abstraction: one discriminator — <code>providerKind</code></h2>
+    <div class="grid grid-cols-2 gap-6">
+      <div class="p-4 rounded-lg" style="background:var(--color-aquamarine-100); border:1px solid var(--color-aquamarine-300);">
+        <h3 class="font-semibold mb-2" style="color:var(--color-aquamarine-700);">kind: 'calendar' — Google, Outlook</h3>
+        <ul class="text-sm space-y-1.5" style="color:var(--color-basalt-300);">
+          <li>Raw free/busy data — no UI of its own.</li>
+          <li>Builder picks <strong>meeting type + duration</strong>.</li>
+          <li>Moxo renders the slot grid in-portal.</li>
+          <li>Moxo creates the calendar event → <strong>sync completion</strong>.</li>
+        </ul>
+      </div>
+      <div class="p-4 rounded-lg" style="background:#EAF2FF; border:1px solid #B9D2FF;">
+        <h3 class="font-semibold mb-2" style="color:#0047B3;">kind: 'scheduler' — Calendly, Zoom Scheduler</h3>
+        <ul class="text-sm space-y-1.5" style="color:var(--color-basalt-300);">
+          <li>A product whose hosted booking UI is its value.</li>
+          <li><strong>Host = the connection holder</strong> — no host role. Builder picks <strong>connection + schedule</strong> (type + length inherited).</li>
+          <li>Assignee books on the provider's hosted page, against the host's availability.</li>
+          <li>Mint single-use link → <strong>webhook completion</strong> (utm_campaign).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="help" style="font-size:14px;">Because availability, booking UI, and completion path all follow from <em>what the provider is</em>, they collapse to a <strong>single registry discriminator</strong> <code>providerKind: 'calendar' | 'scheduler'</code> — resolved in one kind-complete <code>switch</code> + <code>assertNever</code> (CLAUDE.md unified-path rule). No two-axis matrix, no parallel step types. The builder is unified; the one intentional divergence is the assignee's booking screen.</p>
+  </section>
+
+  <!-- BUILDER MOCKUP -->
+  <section>
+    <h2 class="text-2xl font-bold mb-1" style="color:var(--color-basalt-700);">Builder panel — unified "Schedule a meeting"</h2>
+    <p class="help mb-5" style="font-size:14px;">Mirrors the real <code>TimeBookingConfigEditor.tsx</code> structure. The only new field is the provider's availability source at top; fields that the provider <em>owns</em> (meeting type, duration) collapse when the source is an event-type provider like Calendly.</p>
+
+    <div class="grid grid-cols-2 gap-6 items-start">
+
+      <!-- STATE A: Google Calendar (free/busy) -->
+      <div class="moxo-card shadow-modern p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold" style="color:var(--color-basalt-700);">Meeting details</h3>
+          <span class="chip" style="background:var(--color-aquamarine-100);border-color:var(--color-aquamarine-300);color:var(--color-aquamarine-700);">calendar · Moxo books</span>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Availability source</label>
+          <div class="field px-3 py-2 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span class="logo-tile" style="background:#4285F4;">G</span> Google Calendar
+            </span>
+            <span style="color:var(--color-basalt-100);">▾</span>
+          </div>
+          <p class="help">Availability is read from the host's calendar free/busy.</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Meeting type</label>
+          <div class="field px-3 py-2 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span class="logo-tile" style="background:#00897B;">M</span> Google Meet</span>
+            <span style="color:var(--color-basalt-100);">▾</span>
+          </div>
+          <p class="help">Native pairing — link attached on the host's Google Calendar event.</p>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Meeting host <span class="req">*</span></label>
+          <p class="help" style="margin-top:0;margin-bottom:8px;">The assignee picks a slot on this role's Google Calendar.</p>
+          <div class="field px-3 py-2 flex items-center gap-2">
+            <span class="logo-tile" style="background:var(--color-aquamarine-600);">AM</span> Account Manager
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Additional participants</label>
+          <div class="field px-3 py-2 flex items-center gap-2 flex-wrap" style="min-height:38px;">
+            <span class="chip"><span class="logo-tile" style="width:18px;height:18px;font-size:9px;background:var(--color-quartz-600);">SE</span> Sales Engineer</span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Meeting length</label>
+          <div class="field px-3 py-2 flex items-center justify-between"><span>30 minutes</span><span style="color:var(--color-basalt-100);">▾</span></div>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Meeting title</label>
+          <div class="field px-3 py-2"><span>Discovery call · </span><span class="chip" style="background:var(--color-quartz-100);border-color:var(--color-quartz-600);color:var(--color-quartz-700);">{Inputs / Company}</span></div>
+        </div>
+
+        <div class="rounded-lg p-3" style="border:1px solid var(--color-travertine-400); background:var(--color-travertine-200);">
+          <div class="flex items-center gap-1.5 mb-2"><span class="tick">✦</span><span class="text-xs font-medium">Available downstream</span></div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="chip mono" style="font-size:11px;">{meet.startTime}</span>
+            <span class="chip mono" style="font-size:11px;">{meet.joinUrl}</span>
+            <span class="chip mono" style="font-size:11px;">{meet.bookerEmail}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATE B: Calendly (event-type) -->
+      <div class="moxo-card shadow-modern p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold" style="color:var(--color-basalt-700);">Meeting details</h3>
+          <span class="chip" style="background:#EAF2FF;border-color:#B9D2FF;color:#0047B3;">scheduler · hosted handoff</span>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Availability source</label>
+          <div class="field px-3 py-2 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span class="logo-tile" style="background:#006BFF;">C</span> Calendly</span>
+            <span style="color:var(--color-basalt-100);">▾</span>
+          </div>
+          <p class="help">At runtime Moxo mints a single-use Calendly link; the assignee books on Calendly's hosted page; a webhook completes the step.</p>
+        </div>
+
+        <!-- Connection = host. No separate host-role picker for schedulers. -->
+        <div class="mb-4">
+          <label class="label">Calendly connection — meeting host <span class="req">*</span></label>
+          <div class="field px-3 py-2 flex items-center justify-between">
+            <span class="flex items-center gap-2"><span class="logo-tile" style="background:var(--color-aquamarine-600);">AR</span> Alex Rivera · alex@acme.com</span>
+            <span style="color:var(--color-basalt-100);">▾</span>
+          </div>
+          <p class="help"><strong>The connection holder is the host.</strong> The booking is on this account's availability — there's no separate host role (same as today's Zoom Scheduler). Not connected yet → "Connect Calendly" runs the popup OAuth.</p>
+        </div>
+
+        <!-- Schedule belongs to the connected account -->
+        <div class="mb-4">
+          <label class="label">Calendly event type <span class="req">*</span></label>
+          <div class="field px-3 py-2 flex items-center justify-between">
+            <span class="flex items-center gap-2">📅 30 Minute Meeting</span>
+            <span style="color:var(--color-basalt-100);">▾</span>
+          </div>
+          <p class="help">Fetched from Alex's connected Calendly account. The event type defines duration + availability rules.</p>
+        </div>
+
+        <!-- COLLAPSED fields: the event type owns them; no host role, no participants -->
+        <div class="mb-4">
+          <label class="label" style="color:var(--color-basalt-100);">Meeting type</label>
+          <div class="field field-disabled px-3 py-2 flex items-center justify-between">
+            <span>Set by the Calendly event type</span>
+            <span>🔒</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="label" style="color:var(--color-basalt-100);">Meeting length</label>
+          <div class="field field-disabled px-3 py-2 flex items-center justify-between">
+            <span>30 minutes — from event type</span><span>🔒</span>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="label" style="color:var(--color-basalt-100);">Host role &amp; additional participants</label>
+          <div class="field field-disabled px-3 py-2 flex items-center justify-between">
+            <span>n/a — host is the connection; invitees are managed by Calendly</span><span>🔒</span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="label" style="color:var(--color-basalt-100);">Meeting title &amp; agenda</label>
+          <div class="field field-disabled px-3 py-2 flex items-center justify-between">
+            <span>Owned by the Calendly event type — Moxo doesn't create the event</span><span>🔒</span>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="label">Meeting context / purpose <span class="text-label-tertiary" style="color:var(--color-basalt-100);font-weight:400;">(optional)</span></label>
+          <div class="field px-3 py-2"><span>Discovery call · </span><span class="chip" style="background:var(--color-quartz-100);border-color:var(--color-quartz-600);color:var(--color-quartz-700);">{Inputs / Company}</span></div>
+          <p class="help">DDR-supported. Passed to the host via <code>utm_content</code> + booking prefill — <strong>not</strong> the meeting title (the event type owns that). This is today's ZOOM_SCHEDULER <code>meetingPurpose</code>.</p>
+        </div>
+
+        <div class="rounded-lg p-3" style="border:1px solid var(--color-travertine-400); background:var(--color-travertine-200);">
+          <div class="flex items-center gap-1.5 mb-2"><span class="tick">✦</span><span class="text-xs font-medium">Available downstream (same tokens, any provider)</span></div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="chip mono" style="font-size:11px;">{meet.startTime}</span>
+            <span class="chip mono" style="font-size:11px;">{meet.joinUrl}</span>
+            <span class="chip mono" style="font-size:11px;">{meet.bookerEmail}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="help mt-4" style="font-size:13.5px;"><strong>The conditional-field rule:</strong> for <code>calendar</code> providers the builder picks a host <em>role</em> + meeting type + length + participants. For <code>scheduler</code> providers (<strong>Calendly and Zoom Scheduler share this exact builder shape</strong>) all of those collapse: <strong>the connection holder is the host</strong> (no role picker), and meeting type / length / invitees / <strong>title + agenda</strong> are owned by the selected schedule + the provider's hosted page. The scheduler config is essentially just <strong>connection + schedule</strong> (+ an optional DDR <em>purpose</em> blurb passed via UTM/prefill). The Calendly card doubles as the Zoom card — swap "Calendly event type" for "Zoom schedule". DDR output tokens are <strong>identical across all four providers</strong> so downstream steps never branch on who booked.</p>
+  </section>
+
+  <!-- Assignee experience divergence -->
+  <section>
+    <h2 class="text-2xl font-bold mb-1" style="color:var(--color-basalt-700);">Where they <em>do</em> diverge — the assignee's screen</h2>
+    <p class="help mb-5" style="font-size:14px;">Same builder, different <code>providerKind</code> → different assignee experience. This divergence is <strong>intended</strong>: a dedicated scheduler earns its own polished UI, and that's exactly what the customer paid for.</p>
+    <div class="grid grid-cols-2 gap-6 items-start">
+      <div class="moxo-card shadow-modern p-5">
+        <span class="chip mb-3" style="background:var(--color-aquamarine-100);border-color:var(--color-aquamarine-300);color:var(--color-aquamarine-700);">calendar · Google / Outlook</span>
+        <h3 class="font-semibold mt-3" style="color:var(--color-basalt-700);">Discovery call · Acme Corp</h3>
+        <p class="help" style="margin-top:2px;">Pick a time with your Account Manager</p>
+        <div class="flex gap-1.5 mt-3 mb-3">
+          <span class="chip" style="font-size:12px;">Mon 23</span><span class="chip" style="background:var(--color-basalt-400);color:#fff;border-color:var(--color-basalt-400);font-size:12px;">Tue 24</span><span class="chip" style="font-size:12px;">Wed 25</span><span class="chip" style="font-size:12px;">Thu 26</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <span class="chip justify-center" style="font-size:12px;">9:00</span>
+          <span class="chip justify-center" style="background:var(--color-aquamarine-100);border-color:var(--color-aquamarine-600);color:var(--color-aquamarine-700);font-size:12px;">9:30</span>
+          <span class="chip justify-center" style="font-size:12px;">10:00</span>
+          <span class="chip justify-center" style="font-size:12px;">11:00</span>
+          <span class="chip justify-center" style="font-size:12px;">1:30</span>
+          <span class="chip justify-center" style="font-size:12px;">2:00</span>
+        </div>
+        <p class="help">In-portal slot grid. Confirm → booked synchronously, step completes immediately.</p>
+      </div>
+      <div class="moxo-card shadow-modern p-5">
+        <span class="chip mb-3" style="background:#EAF2FF;border-color:#006BFF;color:#0047B3;">scheduler · Calendly + Zoom Scheduler</span>
+        <h3 class="font-semibold mt-3" style="color:var(--color-basalt-700);">Schedule meeting: 30-min intro call</h3>
+        <p class="help" style="margin-top:2px;">Book a time with your Account Manager.</p>
+        <div class="mt-4 mb-2">
+          <span class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium" style="background:var(--color-basalt-400);color:#fff;">↗ Take action</span>
+        </div>
+        <p class="help">Opens the provider's hosted page (<code>calendly.com</code> / <code>scheduler.zoom.us</code>) in a new tab. After booking there, a <strong>webhook</strong> (matched by <code>utm_campaign</code>) completes the step — the card shows "Waiting for booking confirmation" until it fires. One code path serves both schedulers.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Palette before/after -->
+  <section>
+    <h2 class="text-2xl font-bold mb-4" style="color:var(--color-basalt-700);">Step palette — what the builder sees</h2>
+    <div class="grid grid-cols-2 gap-6">
+      <div>
+        <span class="pill" style="background:var(--color-shell-100); color:var(--color-shell-700);">Before — 3 overlapping entries</span>
+        <div class="moxo-card p-4 mt-3 space-y-2">
+          <div class="field px-3 py-2 text-sm">📅 Time Booking <span style="color:var(--color-basalt-100)">— calendar slot picker (Meet/Teams/Zoom)</span></div>
+          <div class="field px-3 py-2 text-sm">🟦 Zoom Scheduler <span style="color:var(--color-basalt-100)">— hand off to scheduler.zoom.us</span></div>
+          <div class="field px-3 py-2 text-sm">🟦 Calendly <span style="color:var(--color-basalt-100)">— hand off to calendly.com</span></div>
+          <p class="help">A builder wanting "let the assignee pick a time" sees three doors that all do the same job, split only by which vendor — and no guidance on which to pick.</p>
+        </div>
+      </div>
+      <div>
+        <span class="pill" style="background:var(--color-jade-100); color:var(--color-jade-700);">After — 1 entry, provider inside</span>
+        <div class="moxo-card p-4 mt-3 space-y-2">
+          <div class="field px-3 py-2 text-sm">📅 Schedule a meeting <span style="color:var(--color-basalt-100)">— assignee picks a slot; provider chosen in config</span></div>
+          <div class="field px-3 py-2 text-sm" style="opacity:.55;">🔌 Schedule Meeting (External App) <span style="color:var(--color-basalt-100)">— stays: fixed-time, no negotiation</span></div>
+          <p class="help">One "let the assignee book a time" concept. Google / Outlook / Calendly / <strong>Zoom Scheduler</strong> are all providers inside it. The fixed-time External App action stays — it's a genuinely different intent (no negotiation).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Runtime resolver -->
+  <section class="moxo-card p-7">
+    <h2 class="text-2xl font-bold mb-4" style="color:var(--color-basalt-700);">Runtime — one resolver, branch on <code>providerKind</code></h2>
+    <div class="mermaid">
+flowchart TD
+  A["Step activates"] --> B{"providerKind"}
+  B -->|calendar| C["Resolve host's calendar OAuth<br/>(Google / Outlook)"]
+  C --> E["Read free/busy → Moxo computes slots"]
+  E --> G["Render Moxo slot grid in-portal → assignee picks"]
+  G --> H["Create calendar event + attach link"]
+  H --> I["Stamp meet.* → COMPLETED (sync)"]
+  B -->|scheduler| J["Mint single-use link<br/>Calendly /scheduling_links · Zoom single_use_link"]
+  J --> K["Assignee opens hosted page in new tab<br/>+ utm_campaign = stepExecutionId"]
+  K --> L["Webhook → match utm_campaign<br/>→ stamp meet.* → COMPLETED"]
+  style I fill:#F6FFFB,stroke:#038C92
+  style L fill:#F6FFFB,stroke:#038C92
+  style J fill:#EAF2FF,stroke:#006BFF
+  style C fill:#F4FCFF,stroke:#2D99C5
+    </div>
+    <p class="help" style="font-size:14px;">One <code>switch (providerKind)</code> ending in <code>assertNever</code> — adding a provider can't silently miss a branch. The <code>scheduler</code> path (blue) is today's ZOOM_SCHEDULER executor generalized to two providers: each supplies a <code>createSingleUseLink()</code> adapter + a webhook handler; the link-mint, UTM stamping, dispatch, and CAS completion are shared. Calendly differs from Zoom only in the two adapter calls.</p>
+  </section>
+
+  <!-- What changes -->
+  <section class="grid grid-cols-2 gap-6">
+    <div class="moxo-card p-6">
+      <h2 class="font-semibold mb-3" style="color:var(--color-basalt-700);">What this buys us</h2>
+      <ul class="text-sm space-y-2" style="color:var(--color-basalt-300);">
+        <li>✅ <strong>One discriminator</strong> (<code>calendar</code> vs <code>scheduler</code>) — no two-axis matrix to reason about.</li>
+        <li>✅ One step type, one builder, one DDR output shape (<code>meet.*</code>).</li>
+        <li>✅ Calendly + Zoom ship as <em>providers</em>; the scheduler runtime is shared (link-mint + webhook), each adds two small adapters.</li>
+        <li>✅ Retires the ZOOM_SCHEDULER step type while <em>reusing</em> its executor as the shared scheduler path.</li>
+        <li>✅ We don't reimplement Calendly's booking UX (branding, reschedule, custom questions) — we defer to it. Less to build, truer to the product.</li>
+      </ul>
+    </div>
+    <div class="moxo-card p-6">
+      <h2 class="font-semibold mb-3" style="color:var(--color-basalt-700);">Open questions / risks</h2>
+      <ul class="text-sm space-y-2" style="color:var(--color-basalt-300);">
+        <li>⚠️ <strong>Schedulers leave Moxo</strong> — assignee books in a new tab, completion is webhook-driven (no polling). Acceptable + intended, but the local-dev story needs a webhook tunnel (already true for Zoom).</li>
+        <li>⚠️ Calendly single-use link needs a <strong>paid Calendly plan</strong> + OAuth app — gate the provider, surface a clear message.</li>
+        <li>⚠️ Calendly <strong>UTM-stripping edge case</strong> reported in some link formats — verify <code>utm_campaign</code> survives on the minted <code>booking_url</code> before relying on it for correlation (fallback: invitee URI lookup).</li>
+        <li>⚠️ DDR <strong>output rename</strong>: today's ZOOM_SCHEDULER emits flat <code>bookingTime/meetingLink/inviteeEmail</code>; normalize to <code>meet.*</code>. Cheap now (unused), a migration later.</li>
+        <li>✅ <strong>Host binding settled:</strong> for schedulers the <strong>connection holder is the host</strong> (no host role, no per-flow resolution) — matches today's ZOOM_SCHEDULER. Just map its <code>connectionId + scheduleId</code> into the unified <code>booking.*</code> shape.</li>
+        <li>⚠️ Consequence of connection=host: the per-flow <code>AWAITING_HOST_SETUP</code> gate is <strong>calendar-only</strong>. A scheduler with an unconnected/expired connection is a build-time / config error (today's <code>RECONNECT_REQUIRED</code> → step FAILED), not a per-flow host gate.</li>
+        <li>⚠️ Supersedes the existing ADR ("why a separate step type") — write the reversal.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="mt-12 text-xs text-center" style="color: var(--color-basalt-100);">
+    try-moxo · 2026-06-22 · exploration mockup — not yet a committed plan
+  </footer>
+</div>
+</body>
+</html>
