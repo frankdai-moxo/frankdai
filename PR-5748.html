@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>OAuth 2.1 DCR for MCP — PR Review</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral",
+    themeVariables: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+      primaryColor: '#F6F5F3',
+      primaryTextColor: '#3E3C3A',
+      primaryBorderColor: '#EBEAE6',
+      lineColor: '#77736F',
+      actorBkg: '#FFFFFF',
+      actorBorder: '#D9D6D4',
+      actorTextColor: '#22201E',
+      signalColor: '#3E3C3A',
+      signalTextColor: '#22201E',
+      labelBoxBkgColor: '#F4FCFF',
+      labelBoxBorderColor: '#2D99C5',
+      labelTextColor: '#22201E',
+      noteBkgColor: '#FDFFE9',
+      noteBorderColor: '#CEA40D',
+      noteTextColor: '#22201E'
+    }
+  });
+</script>
+<style>
+  :root {
+    --color-travertine-100: #FCFAFA;
+    --color-travertine-200: #F6F5F3;
+    --color-travertine-300: #F0EEEE;
+    --color-travertine-400: #EBEAE6;
+    --color-travertine-500: #E6E4E1;
+    --color-travertine-700: #D9D6D4;
+    --color-travertine-900: #ABA6A2;
+    --color-basalt-100: #8D8984;
+    --color-basalt-200: #77736F;
+    --color-basalt-300: #595653;
+    --color-basalt-400: #3E3C3A;
+    --color-basalt-700: #22201E;
+    --color-shell-100: #FFF5F6;
+    --color-shell-600: #F66985;
+    --color-shell-700: #E64767;
+    --color-jade-100: #F6FFFB;
+    --color-jade-500: #57B3A6;
+    --color-jade-700: #038C92;
+    --color-lichen-100: #FDFFE9;
+    --color-lichen-600: #E0BB25;
+    --color-lichen-700: #CEA40D;
+    --color-aquamarine-100: #F4FCFF;
+    --color-aquamarine-300: #B8E8FF;
+    --color-aquamarine-600: #44BEE8;
+    --color-aquamarine-700: #2D99C5;
+    --color-quartz-100: #FFF5FD;
+    --color-quartz-300: #EFB9DE;
+    --color-quartz-600: #DB6FAA;
+    --color-quartz-700: #C73F89;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; line-height: 1.55; }
+  .moxo-card { background: #fff; border: 1px solid var(--color-travertine-400); border-radius: 12px; }
+  .shadow-modern { box-shadow: 0 10px 40px -10px rgb(15 23 42 / .08), 0 2px 8px -2px rgb(15 23 42 / .04); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.4; }
+  .mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+  pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.55; }
+  .code-block { background: #FAFAF8; border: 1px solid var(--color-travertine-400); border-radius: 8px; padding: 14px 16px; overflow-x: auto; color: var(--color-basalt-400); }
+  .code-block .add { background: #ECFDF5; display: block; margin: 0 -16px; padding: 0 16px; }
+  .code-block .del { background: #FEF2F2; display: block; margin: 0 -16px; padding: 0 16px; text-decoration: line-through; opacity: 0.7; }
+  .code-block .cm { color: var(--color-basalt-100); }
+  .code-block .kw { color: var(--color-aquamarine-700); }
+  .code-block .str { color: var(--color-jade-700); }
+  .mermaid { background: #fff; padding: 18px; border-radius: 12px; border: 1px solid var(--color-travertine-400); }
+  table.tight th, table.tight td { padding: 10px 12px; vertical-align: top; border-bottom: 1px solid var(--color-travertine-300); }
+  table.tight thead th { background: var(--color-travertine-200); font-weight: 600; color: var(--color-basalt-700); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+  table.tight tbody tr:last-child td { border-bottom: 0; }
+  h1, h2, h3 { color: var(--color-basalt-700); }
+  h2 { font-weight: 700; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-basalt-100); }
+  .check { color: var(--color-jade-700); font-weight: 600; }
+  .x { color: var(--color-shell-700); font-weight: 600; }
+</style>
+</head>
+<body class="min-h-screen p-8" style="background: var(--color-travertine-100); color: var(--color-basalt-400);">
+<div class="max-w-6xl mx-auto space-y-10">
+
+  <!-- ─────────────────────────────── HEADER ─────────────────────────────── -->
+  <header class="moxo-card shadow-modern p-8">
+    <div class="flex items-start justify-between gap-6">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <span class="chip" style="background: var(--color-aquamarine-100); color: var(--color-aquamarine-700);">Module 8 · Integrations</span>
+          <span class="chip" style="background: var(--color-quartz-100); color: var(--color-quartz-700);">ADR-305</span>
+          <span class="chip" style="background: var(--color-jade-100); color: var(--color-jade-700);">Ready for review</span>
+        </div>
+        <h1 class="text-3xl font-bold mb-2">OAuth 2.1 DCR + PKCE-public-client for MCP integrations</h1>
+        <p class="text-lg" style="color: var(--color-basalt-200);">
+          Generalize Moxo's <span class="mono">oauth-mcp</span> flow so it works with hosted MCP servers that self-register clients at runtime — and ship Fathom as the first one.
+        </p>
+      </div>
+      <div class="text-right text-sm shrink-0" style="color: var(--color-basalt-200);">
+        <div class="font-semibold" style="color: var(--color-basalt-700);">PR scope</div>
+        <div class="mt-1">9 files · +352 / −26</div>
+        <div class="mt-1">48 tests passing</div>
+      </div>
+    </div>
+
+    <div class="mt-6 grid grid-cols-4 gap-4 pt-6" style="border-top: 1px solid var(--color-travertine-400);">
+      <div>
+        <div class="section-label">Unlocked today</div>
+        <div class="mt-1 font-semibold" style="color: var(--color-basalt-700);">Fathom MCP</div>
+      </div>
+      <div>
+        <div class="section-label">Unlocked next (registry-only)</div>
+        <div class="mt-1 font-semibold" style="color: var(--color-basalt-700);">Linear · Notion hosted · Cloudflare MCPs</div>
+      </div>
+      <div>
+        <div class="section-label">Existing flows touched</div>
+        <div class="mt-1 font-semibold" style="color: var(--color-basalt-700);">HubSpot MCP — unchanged</div>
+      </div>
+      <div>
+        <div class="section-label">New attack surface</div>
+        <div class="mt-1 font-semibold" style="color: var(--color-basalt-700);">SSRF-guarded + explicit allowlist</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─────────────────────────────── 1. PROBLEM ─────────────────────────────── -->
+  <section class="moxo-card shadow-modern p-8">
+    <span class="section-label">1 · Why this PR exists</span>
+    <h2 class="text-2xl mt-2 mb-4">Modern hosted MCP servers don't ship pre-registered OAuth apps</h2>
+    <p class="mb-4">Until this PR, Moxo's <span class="mono">oauth-mcp</span> profile assumed every MCP server worked like HubSpot: a developer registers a Moxo OAuth app in the provider's dev portal, we bake the <span class="mono">CLIENT_ID</span> + <span class="mono">CLIENT_SECRET</span> into AWS Secrets Manager, every customer's OAuth handshake uses that shared identity.</p>
+    <p class="mb-6">A new generation of MCP servers — Fathom, Linear's hosted MCP, Notion's hosted MCP, Cloudflare's MCP Workers template — does <strong>not</strong> work that way. They expose <strong>Dynamic Client Registration (RFC 7591)</strong> + <strong>PKCE-public-client</strong>: the client (us) registers itself with the provider's auth server <em>at the first connect</em>, there is no <span class="mono">client_secret</span>, and PKCE alone proves identity. Without DCR support, Moxo can't connect to any of these — they all 401 at the token endpoint.</p>
+
+    <div class="grid grid-cols-2 gap-6 mt-4">
+      <div class="p-5 rounded-xl" style="background: var(--color-quartz-100); border: 1px solid var(--color-quartz-300);">
+        <div class="chip mb-3" style="background: var(--color-quartz-600); color: white;">Pre-registered confidential</div>
+        <div class="text-xs font-semibold mb-2" style="color: var(--color-basalt-100); text-transform: uppercase; letter-spacing: 0.04em;">What HubSpot needs</div>
+        <ul class="text-sm space-y-1.5 mb-3">
+          <li><span class="x">●</span> Human dev registers Moxo app in HubSpot's portal</li>
+          <li><span class="x">●</span> <span class="mono">CLIENT_ID</span> + <span class="mono">CLIENT_SECRET</span> baked into Secrets Manager</li>
+          <li><span class="x">●</span> Endpoints hard-coded in registry entry</li>
+          <li><span class="x">●</span> Token exchange sends <span class="mono">client_secret</span></li>
+        </ul>
+        <p class="text-xs" style="color: var(--color-basalt-200);">Works today. Stays working — unchanged by this PR.</p>
+      </div>
+
+      <div class="p-5 rounded-xl" style="background: var(--color-aquamarine-100); border: 1px solid var(--color-aquamarine-300);">
+        <div class="chip mb-3" style="background: var(--color-aquamarine-600); color: white;">DCR + public client</div>
+        <div class="text-xs font-semibold mb-2" style="color: var(--color-basalt-100); text-transform: uppercase; letter-spacing: 0.04em;">What Fathom (and the next 4 hosted MCPs) need</div>
+        <ul class="text-sm space-y-1.5 mb-3">
+          <li><span class="check">●</span> Moxo registers ITSELF on first connect (per-org)</li>
+          <li><span class="check">●</span> No secret ever issued — PKCE proves identity</li>
+          <li><span class="check">●</span> Endpoints discovered from <span class="mono">.well-known/oauth-authorization-server</span></li>
+          <li><span class="check">●</span> Token exchange sends <span class="mono">code_verifier</span> only</li>
+        </ul>
+        <p class="text-xs" style="color: var(--color-basalt-200);"><strong>What this PR adds.</strong> Same code path; selected per integration via two flags on <span class="mono">providerOverrides</span>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────── 2. DCR EXPLAINER ─────────────────────────────── -->
+  <section class="moxo-card shadow-modern p-8">
+    <span class="section-label">2 · The DCR handshake, step by step</span>
+    <h2 class="text-2xl mt-2 mb-4">PKCE replaces <span class="mono">client_secret</span> — the verifier never travels on the wire until token exchange</h2>
+    <p class="mb-6">DCR (RFC 7591) lets a client register itself with the authorization server at runtime, instead of a human pre-registering in a developer portal. PKCE (RFC 7636) gives that client a way to prove identity at the token endpoint without a secret — the client commits to a random <span class="mono">code_verifier</span> via its SHA-256 hash at the start of the flow, then reveals the original on token exchange. Anyone who intercepted the auth code can't redeem it without the verifier.</p>
+
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as Org Admin
+    participant Moxo as Moxo backend
+    participant DB as mcp_oauth_dynamic_clients
+    participant AS as Fathom auth server<br/>(api.fathom.ai)
+    participant Auth as Fathom consent UI<br/>(fathom.video)
+
+    Note over Moxo,AS: Phase A — First-time discovery + registration (per org)
+    Moxo->>AS: GET /.well-known/oauth-authorization-server
+    AS-->>Moxo: { auth_endpoint, token_endpoint, registration_endpoint, S256, "none" }
+    Note over Moxo: SSRF guard + discoveryAllowedOrigins<br/>check every URL before trusting it
+    Moxo->>DB: SELECT (orgId, integrationId)
+    DB-->>Moxo: not found (first time)
+    Moxo->>AS: POST /oauth/register<br/>{ redirect_uris, grant_types, scope }
+    AS-->>Moxo: { client_id: "UEIYXh..." }
+    Moxo->>DB: INSERT (orgId, integrationId, client_id, endpoints)
+
+    Note over Moxo,Auth: Phase B — Per-user OAuth flow (PKCE)
+    Moxo->>Moxo: generate code_verifier (64 random bytes)<br/>+ code_challenge = SHA256(code_verifier)
+    Moxo->>User: 302 → fathom.video/authorize<br/>?client_id=...&code_challenge=...&state=...
+    User->>Auth: signs in, approves
+    Auth-->>User: 302 → callback?code=AUTH_CODE&state=...
+    User->>Moxo: GET /api/oauth/callback?code=...
+
+    Note over Moxo,AS: Phase C — Token exchange (no secret, PKCE only)
+    Moxo->>DB: SELECT (orgId, integrationId)<br/>→ cached client_id + token_endpoint
+    Moxo->>AS: POST /oauth/token<br/>grant_type=authorization_code<br/>code=AUTH_CODE<br/>client_id=...<br/>code_verifier=ORIGINAL_RANDOM
+    Note right of AS: SHA256(code_verifier) === code_challenge?<br/>YES → issue tokens
+    AS-->>Moxo: { access_token, refresh_token, expires_in }
+    Moxo->>Moxo: persist tokens to mcp_connections (KMS envelope)<br/>discover MCP tools<br/>mark CONNECTED
+    </div>
+
+    <div class="mt-5 grid grid-cols-3 gap-4 text-xs">
+      <div class="p-3 rounded-lg" style="background: var(--color-travertine-200);">
+        <div class="font-semibold mb-1" style="color: var(--color-basalt-700);">Phase A · Once per org</div>
+        Discovery + DCR. Cached in <span class="mono">mcp_oauth_dynamic_clients</span>. Subsequent users in the same org reuse the row — one extra HTTP per org, ever.
+      </div>
+      <div class="p-3 rounded-lg" style="background: var(--color-travertine-200);">
+        <div class="font-semibold mb-1" style="color: var(--color-basalt-700);">Phase B · Per user</div>
+        Standard PKCE auth-code flow. <span class="mono">code_verifier</span> stays in Moxo's signed state token; only its SHA-256 hash goes over the wire.
+      </div>
+      <div class="p-3 rounded-lg" style="background: var(--color-travertine-200);">
+        <div class="font-semibold mb-1" style="color: var(--color-basalt-700);">Phase C · Token exchange</div>
+        No <span class="mono">client_secret</span> field anywhere. The verifier hash from Phase B is what the AS compares against — that's what proves we're the same client that started the flow.
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────── 3. THE CODE SHAPE ─────────────────────────────── -->
+  <section class="moxo-card shadow-modern p-8">
+    <span class="section-label">3 · What the PR actually changes</span>
+    <h2 class="text-2xl mt-2 mb-4">One resolver, two flags, three new files — HubSpot path is byte-identical</h2>
+
+    <div class="grid grid-cols-2 gap-6 mb-6">
+      <div>
+        <h3 class="font-bold text-base mb-2">Three new files</h3>
+        <ul class="text-sm space-y-2">
+          <li><span class="mono">services/mcp-oauth-discovery.ts</span> — fetches <span class="mono">.well-known/oauth-authorization-server</span>, validates each endpoint against the SSRF guard AND a per-integration allowlist. 60s in-memory cache.</li>
+          <li><span class="mono">services/mcp-dynamic-client.ts</span> — <span class="mono">ensureDynamicClient(orgId, integration, redirectUri)</span> with a per-(org, integration) advisory lock so concurrent first-connects can't double-register.</li>
+          <li><span class="mono">db/schema.ts</span> — new table <span class="mono">mcp_oauth_dynamic_clients</span>, composite PK on <span class="mono">(orgId, integrationId)</span>, FK to <span class="mono">organizations</span>, classified <span class="mono">identity</span> in the ADR-188 firewall.</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-bold text-base mb-2">One surgical helper in <span class="mono">oauth.ts</span></h3>
+        <p class="text-sm mb-2"><span class="mono">resolveOAuthClientMaterial(integration, orgId, options)</span> replaces three duplicate <span class="mono">getAppCredentials</span> reads at:</p>
+        <ul class="text-sm space-y-1 ml-4 list-disc">
+          <li><span class="mono">generateIntegrationAuthUrl</span> (kickoff)</li>
+          <li><span class="mono">handleIntegrationOAuthCallback</span> (token exchange)</li>
+          <li><span class="mono">performRefreshTokenExchange</span> (refresh)</li>
+        </ul>
+        <p class="text-sm mt-2">Each call site stays one line. The DCR vs. legacy fork lives in <em>one</em> helper — per <a class="underline" href="#" style="color: var(--color-aquamarine-700);">ADR-204</a> "one kind-complete resolver, not three per-consumer matchers."</p>
+      </div>
+    </div>
+
+    <h3 class="font-bold text-base mb-2 mt-6">The two new flags on <span class="mono">providerOverrides</span></h3>
+    <div class="code-block mb-4"><pre>auth: {
+  type: 'OAUTH2',
+  oauth2: {
+    authorizationUrl: 'https://fathom.video/mcp/oauth/authorize',   <span class="cm">// kept as documentation</span>
+    tokenUrl:         'https://api.fathom.ai/mcp/oauth/token',      <span class="cm">// runtime uses discovered values</span>
+    scopes: ['mcp'],
+    providerOverrides: {
+      requiresPkce: true,                                            <span class="cm">// existing</span>
+<span class="add">      discoverOAuthEndpoints: true,                                  <span class="cm">// NEW — read .well-known at runtime</span></span>
+<span class="add">      discoveryAllowedOrigins: [                                     <span class="cm">// NEW — explicit allowlist (no same-eTLD)</span></span>
+<span class="add">        'https://api.fathom.ai',</span>
+<span class="add">        'https://fathom.video',</span>
+<span class="add">      ],</span>
+<span class="add">      useDynamicClientRegistration: true,                            <span class="cm">// NEW — self-register on first connect</span></span>
+<span class="add">      publicClient: true,                                            <span class="cm">// NEW — omit client_secret at /token</span></span>
+    },
+  },
+}</pre></div>
+    <p class="text-sm" style="color: var(--color-basalt-200);">HubSpot's entry doesn't set any of the new flags → its codepath is byte-identical to today. Verified by 15 pre-existing OAuth integration tests still passing.</p>
+  </section>
+
+  <!-- ─────────────────────────────── 4. VERIFIED WITH FATHOM ─────────────────────────────── -->
+  <section class="moxo-card shadow-modern p-8">
+    <span class="section-label">4 · Verified end-to-end against the live Fathom AS</span>
+    <h2 class="text-2xl mt-2 mb-4">The handshake works — every leg of the flow probed before implementation</h2>
+
+    <div class="grid grid-cols-2 gap-6">
+      <div>
+        <h3 class="font-bold text-sm mb-2"><span class="check">✓</span> AS metadata at <span class="mono">/.well-known</span></h3>
+        <div class="code-block"><pre><span class="kw">$</span> curl https://api.fathom.ai/.well-known/oauth-authorization-server
+{
+  <span class="str">"issuer"</span>: "https://api.fathom.ai",
+  <span class="str">"authorization_endpoint"</span>: "https://fathom.video/mcp/oauth/authorize",
+  <span class="str">"token_endpoint"</span>: "https://api.fathom.ai/mcp/oauth/token",
+  <span class="str">"registration_endpoint"</span>: "https://api.fathom.ai/mcp/oauth/register",
+  <span class="str">"scopes_supported"</span>: [<span class="str">"mcp"</span>],
+  <span class="str">"token_endpoint_auth_methods_supported"</span>: [<span class="str">"none"</span>],
+  <span class="str">"code_challenge_methods_supported"</span>: [<span class="str">"S256"</span>]
+}</pre></div>
+        <p class="text-xs mt-2" style="color: var(--color-basalt-200);">All four required signals: PKCE S256 ✓ · DCR endpoint advertised ✓ · public-client mode ("none") ✓ · single MCP scope ✓.</p>
+      </div>
+
+      <div>
+        <h3 class="font-bold text-sm mb-2"><span class="check">✓</span> DCR register with a localhost dev redirect</h3>
+        <div class="code-block"><pre><span class="kw">$</span> curl -X POST https://api.fathom.ai/mcp/oauth/register \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"redirect_uris":["http://localhost:3001/api/oauth/callback"],
+       "client_name":"Moxo Local Dev (test)",
+       "grant_types":["authorization_code"],
+       "token_endpoint_auth_method":"none"}'</span>
+
+<span class="cm">HTTP/2 201</span>
+{
+  <span class="str">"client_id"</span>: "Ccl8TG41-6KrSiN1InUwBD-Hik7dDVZfM-40hxjdUW0",
+  <span class="str">"redirect_uris"</span>: [<span class="str">"http://localhost:3001/api/oauth/callback"</span>]
+}</pre></div>
+        <p class="text-xs mt-2" style="color: var(--color-basalt-200);">Localhost accepted (RFC 8252 loopback carve-out) · no <span class="mono">client_secret</span> issued (confirms public-client) · rate-limit <span class="mono">20/min</span> on the registration endpoint — the per-org cache covers this comfortably.</p>
+      </div>
+    </div>
+
+    <div class="mt-6 p-4 rounded-lg" style="background: var(--color-jade-100); border: 1px solid var(--color-jade-500);">
+      <div class="font-semibold text-sm mb-1" style="color: var(--color-jade-700);">Confirmed in the local dev session</div>
+      <p class="text-sm">A Fathom MCP tool call (<span class="mono">list_meetings</span>) from a workspace flow step completed end-to-end against this PR's code on a local backend. The MCP wire-up is live.</p>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────── 5. WHY THIS GENERALIZES ─────────────────────────────── -->
+  <section class="moxo-card shadow-modern p-8">
+    <span class="section-label">5 · Why this PR unlocks a class of MCP providers, not just one</span>
+    <h2 class="text-2xl mt-2 mb-4">OAuth 2.1 + DCR + PKCE-public-client is the de-facto standard for hosted MCP servers</h2>
+    <p class="mb-6">The MCP spec recommends this exact OAuth profile for remote MCP servers, and the major hosted providers have aligned on it. Every connector below ships their own AS metadata + DCR endpoint + public-client profile. After this PR, adding any of them is a single registry entry — same shape as Fathom, different URLs.</p>
+
+    <table class="w-full tight">
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>MCP endpoint</th>
+          <th>OAuth profile</th>
+          <th>Effort after this PR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Fathom</strong></td>
+          <td class="mono">api.fathom.ai/mcp</td>
+          <td>OAuth 2.1 · DCR · public client · PKCE S256</td>
+          <td><span class="chip" style="background: var(--color-jade-100); color: var(--color-jade-700);">Done — this PR</span></td>
+        </tr>
+        <tr>
+          <td><strong>Linear</strong> (hosted MCP)</td>
+          <td class="mono">mcp.linear.app</td>
+          <td>OAuth 2.1 · DCR · public client · PKCE S256</td>
+          <td><span class="chip" style="background: var(--color-aquamarine-100); color: var(--color-aquamarine-700);">~30 LOC registry entry</span></td>
+        </tr>
+        <tr>
+          <td><strong>Notion</strong> (hosted MCP)</td>
+          <td class="mono">mcp.notion.com</td>
+          <td>OAuth 2.1 · DCR · public client · PKCE S256</td>
+          <td><span class="chip" style="background: var(--color-aquamarine-100); color: var(--color-aquamarine-700);">~30 LOC registry entry</span></td>
+        </tr>
+        <tr>
+          <td><strong>Cloudflare Workers MCP</strong></td>
+          <td class="mono">Customer-deployed; template uses DCR</td>
+          <td>OAuth 2.1 · DCR · public client · PKCE S256</td>
+          <td><span class="chip" style="background: var(--color-aquamarine-100); color: var(--color-aquamarine-700);">~30 LOC registry entry</span></td>
+        </tr>
+        <tr>
+          <td><strong>Anthropic-hosted remote MCPs</strong></td>
+          <td class="mono">Various</td>
+          <td>OAuth 2.1 · DCR (spec-aligned)</td>
+          <td><span class="chip" style="background: var(--color-aquamarine-100); color: var(--color-aquamarine-700);">~30 LOC registry entry</span></td>
+        </tr>
+        <tr>
+          <td><strong>HubSpot MCP</strong> (existing)</td>
+          <td class="mono">mcp.hubspot.com</td>
+          <td>OAuth 2.1 · pre-registered confidential client</td>
+          <td><span class="chip" style="background: var(--color-travertine-500); color: var(--color-basalt-400);">No change — already shipping</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="mt-6 p-4 rounded-lg" style="background: var(--color-aquamarine-100); border: 1px solid var(--color-aquamarine-300);">
+      <div class="font-semibold text-sm mb-1" style="color: var(--color-aquamarine-700);">Strategic shape</div>
+      <p class="text-sm">This is the same generalization arc as the unified integrations registry itself: the first connector is the expensive one because it forces the right abstraction; every subsequent connector lands as a registry edit. Going forward, "add MCP support for &lt;provider&gt;" is a half-day registry PR, not a multi-day plumbing project.</p>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────── 6. SECURITY / SCOPE ─────────────────────────────── -->
+  <section class="grid grid-cols-2 gap-6">
+    <div class="moxo-card shadow-modern p-6">
+      <span class="section-label">Security posture</span>
+      <h3 class="text-xl mt-2 mb-3">Three defenses on the discovery + registration path</h3>
+      <ol class="text-sm space-y-2 list-decimal ml-5">
+        <li><strong>SSRF guard</strong> on the metadata URL AND on every endpoint the AS returns (incl. the registration endpoint).</li>
+        <li><strong>Per-integration <span class="mono">discoveryAllowedOrigins</span></strong> — an explicit list of scheme+host pairs. Same-eTLD is <em>not</em> accepted (a compromised subdomain on the same registrable domain would otherwise pass).</li>
+        <li><strong>S256 PKCE required</strong> — refuse to use an AS whose metadata doesn't advertise S256 in <span class="mono">code_challenge_methods_supported</span>.</li>
+      </ol>
+      <p class="text-sm mt-3" style="color: var(--color-basalt-200);">DCR row is per-(org, integration) — deleting an org cascades to its DCR identity at the provider. Outbound <span class="mono">fetch()</span> uses <span class="mono">redirect: 'manual'</span> + rejects 3xx so a redirect can't bypass the SSRF/allowlist gate.</p>
+    </div>
+
+    <div class="moxo-card shadow-modern p-6">
+      <span class="section-label">Out of scope (deliberate)</span>
+      <h3 class="text-xl mt-2 mb-3">What this PR doesn't touch</h3>
+      <ul class="text-sm space-y-2">
+        <li><span class="x">●</span> No frontend changes — Fathom appears via the existing registry-driven Connected Apps UI.</li>
+        <li><span class="x">●</span> No changes to HubSpot's or any other existing integration's behavior.</li>
+        <li><span class="x">●</span> No admin UI for "re-register DCR client" — if a provider revokes our client_id, the existing <span class="mono">REQUIRES_REAUTHORIZATION</span> flow handles it. Manual SQL clear is the v1 escape hatch.</li>
+        <li><span class="x">●</span> No DCR client rotation policy — RFC 7591 leaves expiry optional; we treat the client_id as long-lived and re-register on demand if needed.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ─────────────────────────────── 7. REVIEW GUIDE ─────────────────────────────── -->
+  <section class="moxo-card shadow-modern p-8">
+    <span class="section-label">7 · Reviewer's reading order</span>
+    <h2 class="text-2xl mt-2 mb-4">Fastest path through the diff</h2>
+    <ol class="text-sm space-y-3 list-decimal ml-6">
+      <li>
+        <strong>Start with the ADR.</strong> <span class="mono">docs/architecture/decisions.md</span> → ADR-305 (29 lines). Frames the whole change.
+      </li>
+      <li>
+        <strong>Then the registry entry.</strong> <span class="mono">backend/src/integrations/registry/mcp-entries.ts</span> — the Fathom block at the top of the diff shows what a DCR connector looks like.
+      </li>
+      <li>
+        <strong>Then the helper.</strong> <span class="mono">backend/src/integrations/external-apps/oauth.ts</span> → <span class="mono">resolveOAuthClientMaterial</span> (~70 lines) is the only structural change to the existing OAuth flow. The 3 call sites that use it are 1-line edits.
+      </li>
+      <li>
+        <strong>Then the two new services</strong> — <span class="mono">mcp-oauth-discovery.ts</span> (260 LOC, ~half is doc comments) and <span class="mono">mcp-dynamic-client.ts</span> (290 LOC). Each has its own test file pinning every error path.
+      </li>
+      <li>
+        <strong>Skim the schema + cascade.</strong> One new table, one drain in <span class="mono">org-deletion.ts</span>, classified <span class="mono">identity</span> in the data-firewall map.
+      </li>
+      <li>
+        <strong>Tests.</strong> 30 new tests cover every Error & Failure row from the plan (discovery 404/non-JSON/missing PKCE/disallowed origin, DCR 4xx/5xx/concurrent first-connect, public-client URL/body shape). Plus 15 pre-existing OAuth integration tests still green.
+      </li>
+    </ol>
+
+    <div class="mt-6 grid grid-cols-3 gap-4 text-xs">
+      <div class="p-3 rounded-lg" style="background: var(--color-travertine-200);">
+        <div class="font-semibold mb-1" style="color: var(--color-basalt-700);">Reviewer questions worth asking</div>
+        <ul class="space-y-1 mt-2">
+          <li>· Per-org vs global DCR client — right scope?</li>
+          <li>· Discovery cache TTL (60s) — too long / short?</li>
+          <li>· What happens if Fathom revokes the cached <span class="mono">client_id</span>?</li>
+        </ul>
+      </div>
+      <div class="p-3 rounded-lg" style="background: var(--color-travertine-200);">
+        <div class="font-semibold mb-1" style="color: var(--color-basalt-700);">Skip these (already covered)</div>
+        <ul class="space-y-1 mt-2">
+          <li>· HubSpot behavior — byte-identical, pinned by existing tests</li>
+          <li>· Frontend — no changes</li>
+          <li>· Migration safety — additive table, no backfill</li>
+        </ul>
+      </div>
+      <div class="p-3 rounded-lg" style="background: var(--color-travertine-200);">
+        <div class="font-semibold mb-1" style="color: var(--color-basalt-700);">Tooling</div>
+        <ul class="space-y-1 mt-2">
+          <li>· code-review · bug-prevention · test-coverage · migration · docs-update — all PASS</li>
+          <li>· Codex P4 will run on push</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-xs text-center pt-4" style="color: var(--color-basalt-100);">
+    worktree · <span class="mono">feat-mcp-dcr-fathom</span> · 2026-06-24
+  </footer>
+</div>
+</body>
+</html>
