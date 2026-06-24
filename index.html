@@ -106,6 +106,7 @@
 
 <script>
 const REPO = "frankdai-moxo/frankdai";
+const PR_REPO = "try-moxo/try-moxo";
 const BRANCH = "main";
 const SELF = "index.html";
 
@@ -140,7 +141,7 @@ function prMatch(name) {
 
 function renderCard(item) {
   const pr = prMatch(item.name);
-  const prLink = pr ? `https://github.com/${REPO}/pull/${pr}` : null;
+  const prLink = pr ? `https://github.com/${PR_REPO}/pull/${pr}` : null;
   const title = item.title || item.name.replace(/\.html$/i, "");
   const subtitle = pr ? `PR #${pr}` : item.name;
   const dateLabel = fmtDate(item.committedAt);
