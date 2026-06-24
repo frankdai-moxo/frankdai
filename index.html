@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Claude Artifacts — Catalog</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --travertine-100: #FCFAFA;
+    --travertine-200: #F6F5F3;
+    --travertine-300: #F0EEEE;
+    --travertine-400: #EBEAE6;
+    --travertine-500: #E6E4E1;
+    --basalt-100: #8D8984;
+    --basalt-700: #3E3C3A;
+    --ink: #1A1918;
+    --accent: #C96442;
+  }
+  html, body { background: var(--travertine-200); color: var(--basalt-700); }
+  body { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--travertine-400);
+    border-radius: 12px;
+    transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover {
+    border-color: var(--basalt-100);
+    box-shadow: 0 6px 18px -10px rgba(0,0,0,.18);
+    transform: translateY(-1px);
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    background: var(--travertine-300); color: var(--basalt-700);
+  }
+  .pill-accent { background: rgba(201,100,66,.10); color: var(--accent); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid var(--travertine-400);
+    background: #fff; color: var(--basalt-700);
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .btn:hover { background: var(--travertine-200); border-color: var(--basalt-100); }
+  .btn-primary {
+    background: var(--ink); color: #fff; border-color: var(--ink);
+  }
+  .btn-primary:hover { background: var(--basalt-700); border-color: var(--basalt-700); }
+  .skeleton {
+    background: linear-gradient(90deg, var(--travertine-300) 0%, var(--travertine-400) 50%, var(--travertine-300) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  a { color: inherit; }
+</style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-5xl mx-auto px-6 py-12">
+    <header class="mb-10">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-2 h-2 rounded-full" style="background: var(--accent);"></div>
+        <span class="text-xs uppercase tracking-widest" style="color: var(--basalt-100);">frankdai-moxo / frankdai</span>
+      </div>
+      <h1 class="text-3xl font-semibold mb-2" style="color: var(--ink);">Claude Artifacts</h1>
+      <p class="text-sm leading-relaxed max-w-2xl" style="color: var(--basalt-100);">
+        Static HTML previews and design artifacts generated with Claude, hosted here so PR reviewers can open them in a browser without checking out the branch.
+      </p>
+    </header>
+
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium uppercase tracking-wider" style="color: var(--basalt-100);">Artifacts</span>
+        <span id="count" class="pill">—</span>
+      </div>
+      <input
+        id="filter"
+        type="search"
+        placeholder="Filter…"
+        class="text-sm px-3 py-1.5 rounded-lg border outline-none focus:border-stone-500"
+        style="border-color: var(--travertine-400); background: #fff;"
+      />
+    </div>
+
+    <div id="list" class="grid gap-3"></div>
+
+    <div id="empty" class="hidden text-center py-16">
+      <p class="text-sm" style="color: var(--basalt-100);">No HTML artifacts found in this repository.</p>
+    </div>
+
+    <div id="error" class="hidden mt-4 p-4 rounded-lg border text-sm" style="background: #FEF6F2; border-color: rgba(201,100,66,.3); color: var(--accent);">
+      <strong class="font-medium">Couldn't load the catalog.</strong>
+      <span id="error-detail"></span>
+    </div>
+
+    <footer class="mt-16 pt-6 border-t text-xs flex items-center justify-between" style="border-color: var(--travertine-400); color: var(--basalt-100);">
+      <span>Updated live from the <code>main</code> branch.</span>
+      <a href="https://github.com/frankdai-moxo/frankdai" class="underline-offset-2 hover:underline">View on GitHub →</a>
+    </footer>
+  </div>
+
+<script>
+const REPO = "frankdai-moxo/frankdai";
+const BRANCH = "main";
+const SELF = "index.html";
+
+const $list = document.getElementById("list");
+const $count = document.getElementById("count");
+const $empty = document.getElementById("empty");
+const $error = document.getElementById("error");
+const $errorDetail = document.getElementById("error-detail");
+const $filter = document.getElementById("filter");
+
+let allItems = [];
+
+function renderSkeletons(n = 3) {
+  $list.innerHTML = Array.from({ length: n }).map(() => `
+    <div class="card p-5">
+      <div class="skeleton h-4 w-2/3 mb-3"></div>
+      <div class="skeleton h-3 w-1/3"></div>
+    </div>
+  `).join("");
+}
+
+function fmtDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function prMatch(name) {
+  const m = /^PR-(\d+)\.html$/i.exec(name);
+  return m ? m[1] : null;
+}
+
+function renderCard(item) {
+  const pr = prMatch(item.name);
+  const prLink = pr ? `https://github.com/${REPO}/pull/${pr}` : null;
+  const title = item.title || item.name.replace(/\.html$/i, "");
+  const subtitle = pr ? `PR #${pr}` : item.name;
+  const dateLabel = fmtDate(item.committedAt);
+
+  return `
+    <article class="card p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            ${pr ? `<span class="pill pill-accent">PR #${pr}</span>` : `<span class="pill">HTML</span>`}
+            ${dateLabel ? `<span class="text-xs" style="color: var(--basalt-100);">${dateLabel}</span>` : ""}
+          </div>
+          <h2 class="text-base font-medium truncate" style="color: var(--ink);" title="${title.replace(/"/g,'&quot;')}">${title}</h2>
+          <p class="text-xs mt-0.5 truncate" style="color: var(--basalt-100);">${subtitle}</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          ${prLink ? `<a class="btn" href="${prLink}" target="_blank" rel="noopener">PR ↗</a>` : ""}
+          <a class="btn btn-primary" href="./${encodeURIComponent(item.name)}">Open →</a>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function render(items) {
+  if (!items.length) {
+    $list.innerHTML = "";
+    $empty.classList.remove("hidden");
+    $count.textContent = "0";
+    return;
+  }
+  $empty.classList.add("hidden");
+  $count.textContent = String(items.length);
+  $list.innerHTML = items.map(renderCard).join("");
+}
+
+async function fetchTitle(name) {
+  try {
+    const res = await fetch(`./${encodeURIComponent(name)}`, { headers: { Accept: "text/html" } });
+    if (!res.ok) return null;
+    const text = await res.text();
+    const m = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(text);
+    return m ? m[1].trim().replace(/\s+/g, " ") : null;
+  } catch { return null; }
+}
+
+async function fetchLastCommit(path) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/commits?path=${encodeURIComponent(path)}&sha=${BRANCH}&per_page=1`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data[0]?.commit?.committer?.date || null;
+  } catch { return null; }
+}
+
+async function loadCatalog() {
+  renderSkeletons();
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/contents/?ref=${BRANCH}`);
+    if (!res.ok) throw new Error(`GitHub API responded ${res.status}`);
+    const entries = await res.json();
+    const htmls = entries
+      .filter(e => e.type === "file" && /\.html?$/i.test(e.name) && e.name.toLowerCase() !== SELF)
+      .map(e => ({ name: e.name, path: e.path, title: null, committedAt: null }));
+
+    render(htmls);
+    allItems = htmls;
+
+    // Enrich each card asynchronously: page <title> + last commit date.
+    htmls.forEach(async (item, i) => {
+      const [title, committedAt] = await Promise.all([fetchTitle(item.name), fetchLastCommit(item.path)]);
+      allItems[i] = { ...item, title, committedAt };
+      applyFilter();
+    });
+  } catch (err) {
+    $list.innerHTML = "";
+    $error.classList.remove("hidden");
+    $errorDetail.textContent = " " + (err?.message || "Unknown error.");
+  }
+}
+
+function applyFilter() {
+  const q = $filter.value.trim().toLowerCase();
+  const filtered = !q ? allItems : allItems.filter(item =>
+    item.name.toLowerCase().includes(q) ||
+    (item.title || "").toLowerCase().includes(q)
+  );
+  render(filtered);
+}
+
+$filter.addEventListener("input", applyFilter);
+loadCatalog();
+</script>
+</body>
+</html>
